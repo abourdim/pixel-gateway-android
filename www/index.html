@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="cordova.js"></script>
+<script src="cordova_plugins.js"></script>
+<script src="web-bluetooth-shim.js"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PixelGateway</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Transport selector styles */
+    .transport-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 10px;
+    }
+    
+    .transport-selector label {
+      font-size: 0.8rem;
+      color: #a5b4fc;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .transport-selector select {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .transport-selector select:hover:not(:disabled) {
+      border-color: rgba(139, 92, 246, 0.6);
+      background: rgba(15, 23, 42, 0.95);
+    }
+    
+    .transport-selector select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .transport-selector select option {
+      background: #1e293b;
+      color: #e5e7eb;
+    }
+    
+    .transport-selector select option:disabled {
+      color: #64748b;
+    }
+    
+    /* Transport badge styles */
+    .badge.transport-serial {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+    
+    .badge.transport-ble {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+    }
+    
+    /* BLE-specific hint */
+    .ble-hint {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      margin-top: 4px;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+    }
+    
+    .ble-hint.warning {
+      background: rgba(251, 191, 36, 0.1);
+      border-left-color: #fbbf24;
+      color: #fbbf24;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Discrete Loading Indicator -->
+  <div id="loadingIndicator" style="display: none; position: fixed; bottom: 20px; right: 20px; background: linear-gradient(135deg, #10b981, #059669); padding: 12px 20px; border-radius: 50px; box-shadow: 0 4px 20px rgba(16,185,129,0.4); z-index: 9999; animation: slideIn 0.3s ease-out;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div id="loadingSpinner" style="width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <div id="loadingMessage" style="color: white; font-weight: 600; font-size: 0.9rem;">
+        Sending to micro:bit...
+      </div>
+    </div>
+  </div>
+  
+  <div class="app">
+    <div class="rows-container">
+
+      <!-- ================= HEADER ================= -->
+      <div class="header">
+        <div class="bismillah" aria-hidden="true">
+          بِسْمِ ٱللَّٰهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+        </div>
+
+        <div class="title-block">
+          <img src="logo.svg" alt="Logo" class="site-logo animated-logo" />
+          <div>
+            <h1>PixelGateway</h1>
+            <div class="subtitle" style="animation: rainbow 5s linear infinite;">
+              🔌 connect • 📡 beam • ✨ glow
+            </div>
+          </div>
+        </div>
+
+        <div class="status-pill" id="statusPill">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Disconnected</span>
+        </div>
+      </div>
+
+      <!-- ================= EMOJI CARD ================= -->
+      <div class="card" id="emojiCard">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span class="icon">😄</span> Emoji
+            </div>
+            <div class="card-subtitle">
+              Pick an emoji → we convert it to a bitmap → send it to the micro:bit
+              <span style="opacity: 0.4; margin-left: 12px; font-size: 0.7em;">v2.0 • Dual Transport</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <div class="emoji-reorganized">
+            <!-- LEFT: Emoji picker and controls -->
+            <div class="emoji-left">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="section-icon">🧩</span> Emoji library
+                </div>
+                <div class="section-subtitle">Click one to preview</div>
+              </div>
+              <div id="emojiList" class="emoji-grid" aria-label="Emoji list"></div>
+              
+              <!-- Matrix Size Selector -->
+              <div class="control-section" style="margin-top: 12px;">
+                <label for="matrixSize" style="display: block; font-size: 0.75rem; color: #9ca3af; margin-bottom: 6px;">
+                  📐 Matrix Size
+                </label>
+                <select id="matrixSize" style="width: 100%; padding: 6px; background: rgba(15,23,42,0.6); color: #e5e7eb; border: 1px solid rgba(148,163,184,0.3); border-radius: 6px; cursor: pointer;">
+                  <option value="16">16×16 (256 LEDs)</option>
+                  <option value="8" selected>8×8 (64 LEDs)</option>
+                </select>
+              </div>
+              
+              <!-- Brightness Control -->
+              <div class="control-section">
+                <label for="brightnessSlider" style="display: block; font-size: 0.75rem; color: #9ca3af; margin-bottom: 6px;">
+                  💡 Brightness: <span id="brightnessValue">10</span>%
+                </label>
+                <input type="range" id="brightnessSlider" min="10" max="100" value="10" 
+                       style="width: 100%; height: 6px; accent-color: #22c55e;">
+              </div>
+              
+              <!-- Simple Mode Toggle -->
+              <div class="control-section">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.75rem; color: #9ca3af;">
+                  <input type="checkbox" id="simpleModeToggle" style="width: 16px; height: 16px; accent-color: #22c55e; cursor: pointer;">
+                  <span>🎨 Simple Mode (flat colors)</span>
+                </label>
+              </div>
+              
+              <!-- Magic Paintbrush -->
+              <details class="collapsible">
+                <summary>
+                  <span class="icon">🖌️</span> Magic Paintbrush
+                </summary>
+                <div class="card">
+                  <div style="margin: 12px 0; padding: 12px; background: linear-gradient(135deg, rgba(255,0,255,0.1), rgba(0,255,255,0.1)); border-radius: 12px; border: 2px dashed rgba(148,163,184,0.4);">
+                    <label for="brushColor" style="display: block; font-size: 0.85rem; color: #fbbf24; margin-bottom: 8px; font-weight: 700; text-align: center; text-shadow: 0 0 10px rgba(251,191,36,0.5);">
+                      ✨ PAINT YOUR EMOJI ✨
+                    </label>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px;">
+                      <button class="color-btn" data-color="#ff0000" style="background: linear-gradient(135deg, #ff0000, #ff6b6b); height: 36px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; transition: transform 0.2s;" title="Red">🍓</button>
+                      <button class="color-btn" data-color="#ffa500" style="background: linear-gradient(135deg, #ffa500, #ffdd57); height: 36px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; transition: transform 0.2s;" title="Orange">🦊</button>
+                      <button class="color-btn" data-color="#ffff00" style="background: linear-gradient(135deg, #ffff00, #fff89a); height: 36px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; transition: transform 0.2s;" title="Yellow">⭐</button>
+                      <button class="color-btn" data-color="#00ff00" style="background: linear-gradient(135deg, #00ff00, #7aff7a); height: 36px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; transition: transform 0.2s;" title="Green">🦖</button>
+                      <button class="color-btn" data-color="#0080ff" style="background: linear-gradient(135deg, #0080ff, #66b3ff); height: 36px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; transition: transform 0.2s;" title="Blue">🚀</button>
+                      <button class="color-btn" data-color="#a020f0" style="background: linear-gradient(135deg, #a020f0, #d17aff); height: 36px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; transition: transform 0.2s;" title="Purple">🦄</button>
+                      <button class="color-btn" data-color="#ff1493" style="background: linear-gradient(135deg, #ff1493, #ff69b4); height: 36px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; transition: transform 0.2s;" title="Pink">🦩</button>
+                      <button class="color-btn" data-color="#ffffff" style="background: linear-gradient(135deg, #ffffff, #f0f0f0); height: 36px; border-radius: 8px; border: 2px solid rgba(148,163,184,0.5); cursor: pointer; transition: transform 0.2s;" title="White">☁️</button>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <label for="brushColor" style="font-size: 0.7rem; color: #e5e7eb;">🌈 Or pick your own:</label>
+                      <input type="color" id="brushColor" value="#ff0000" style="flex: 1; height: 32px; padding: 0; border: 2px solid rgba(148,163,184,0.4); border-radius: 8px; background: rgba(15,23,42,0.6); cursor: pointer;" />
+                    </div>
+                    
+                    <div class="hint" style="margin-top:8px; text-align: center; font-size: 0.7rem; color: #a5f3fc;">
+                      🖱️ Click + drag to paint • Hold Shift to erase ✨
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <!-- RIGHT: Preview -->
+            <div class="emoji-right">
+              <div class="emoji-matrix-wrap">
+                <div class="emoji-matrix-title">8×8 preview</div>
+                <div id="emojiMatrix" class="pixel-matrix editable" aria-label="Pixel matrix preview"></div>
+                
+                <button id="sendEmojiBtn" class="primary" disabled style="width: 100%; margin-top: 16px; font-size: 1rem; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16,185,129,0.4); animation: pulse 2s infinite;">
+                  <span class="btn-icon">🚀</span> SEND TO MICRO:BIT! ✨
+                </button>
+                
+                <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; justify-content: center;">
+                  <button id="clearPreviewBtn" class="secondary small" style="font-size: 0.7rem;"><span class="btn-icon">🧹</span>Clear</button>
+                  <button id="testRedBtn" class="secondary small" style="font-size: 0.7rem; background: rgba(239,68,68,0.3);">🔴</button>
+                  <button id="testGreenBtn" class="secondary small" style="font-size: 0.7rem; background: rgba(34,197,94,0.3);">🟢</button>
+                  <button id="testBlueBtn" class="secondary small" style="font-size: 0.7rem; background: rgba(59,130,246,0.3);">🔵</button>
+                  <button id="testWhiteBtn" class="secondary small" style="font-size: 0.7rem; background: rgba(255,255,255,0.2);">⚪</button>
+                </div>
+              </div>
+              
+              <!-- Save Design -->
+              <div style="margin-top: 16px; padding: 12px; background: rgba(15,23,42,0.4); border-radius: 10px; border: 1px solid rgba(148,163,184,0.2);">
+                <div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 8px;">💾 Save Design</div>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="saveNameInput" placeholder="Design name..." style="flex: 1; padding: 6px 10px; background: rgba(15,23,42,0.6); color: #e5e7eb; border: 1px solid rgba(148,163,184,0.3); border-radius: 6px; font-size: 0.8rem;">
+                  <button id="saveDesignBtn" class="secondary small" style="font-size: 0.75rem;"><span class="btn-icon">💾</span>Save</button>
+                </div>
+                <div id="savedDesignsList" style="margin-top: 10px; max-height: 100px; overflow-y: auto;"></div>
+                <div id="noSavedDesigns" style="font-size: 0.7rem; color: #64748b; text-align: center; padding: 8px;">No saved designs yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= DEMOS ================= -->
+      <details class="collapsible">
+        <summary><span class="icon">🎬</span> Animation Demos</summary>
+        <div class="card">
+          <div class="card-subtitle" style="margin-bottom: 12px;">Click a demo to see it animate!</div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+            <button id="demoWavingFlag" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">🇩🇿 Waving Flag</button>
+            <button id="demoTrafficLight" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">🚦 Traffic Light</button>
+            <button id="demoHeartBeat" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">💓 Heart Beat</button>
+            <button id="demoSpinningStar" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">⭐ Spinning Star</button>
+            <button id="demoRainbowWave" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">🌈 Rainbow Wave</button>
+            <button id="demoSmiley" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">😄 Happy Face</button>
+            <button id="demoLoadingBar" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">⏳ Loading Bar</button>
+            <button id="demoFireworks" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">🎆 Fireworks</button>
+            <button id="demoRacingCar" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">🏎️ Racing Car</button>
+            <button id="demoStopSign" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">🛑 Stop Sign</button>
+            <button id="demoBlinkingEye" class="secondary" style="font-size: 0.75rem; padding: 8px 12px;">👁️ Blinking Eye</button>
+          </div>
+          <button id="stopDemo" class="fire-btn" style="width: 100%; margin-top: 12px; font-size: 0.8rem; padding: 10px;">⏹️ Stop Demo</button>
+        </div>
+      </details>
+
+      <!-- ================= CONNECTION & MESSAGE ================= -->
+      <details class="collapsible" open>
+        <summary><span class="icon">🔌</span> Connection & Message</summary>
+        <div class="card" id="messageCard">
+          <div class="card-subtitle" style="margin-bottom: 12px;">Connect via USB Serial or Bluetooth</div>
+
+          <!-- TRANSPORT SELECTOR -->
+          <div class="transport-selector">
+            <label for="transportSelect"><span>📡</span> Transport:</label>
+            <select id="transportSelect">
+              <option value="serial">🔌 USB Serial (faster)</option>
+              <option value="ble">📶 Bluetooth LE (wireless)</option>
+            </select>
+          </div>
+          
+          <div id="bleHint" class="ble-hint" style="display: none;">
+            ℹ️ <strong>BLE requires 2 micro:bits:</strong> Gateway (BLE→Radio) + Controller (Radio→NeoPixels).<br>
+            Slower (~200-500 B/s) but fully wireless. See README for setup.
+          </div>
+
+          <!-- CONNECTION -->
+          <div class="control-section" style="margin-bottom: 16px;">
+            <div class="section-header">
+              <div class="section-title"><span class="section-icon">🔌</span> Connection</div>
+              <div class="section-subtitle">Connect to your micro:bit</div>
+            </div>
+
+            <div class="button-row">
+              <button id="connectBtn" class="primary" style="flex: 1;"><span class="btn-icon">🔗</span>Connect</button>
+              <button id="disconnectBtn" class="secondary" disabled style="flex: 1;"><span class="btn-icon">⛔</span>Disconnect</button>
+            </div>
+
+            <div class="hint">
+              <div class="hint-title">Tips</div>
+              <ol>
+                <li>Use Chrome or Edge (desktop or Android for BLE)</li>
+                <li><strong>Serial:</strong> Select the micro:bit serial port</li>
+                <li><strong>BLE:</strong> Select "BBC micro:bit [xxxxx]"</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- MESSAGE -->
+          <div class="control-section">
+            <div class="section-header">
+              <div class="section-title"><span class="section-icon">⌨️</span> Message</div>
+              <div class="section-subtitle">Press Enter or click Send</div>
+            </div>
+
+            <div class="form-row">
+              <input type="text" id="messageInput" placeholder="Type your message here..." />
+              <button id="sendBtn" class="primary" disabled><span class="btn-icon">📨</span>Send</button>
+            </div>
+
+            <div class="button-row" style="margin-top: 12px;">
+              <button id="testBtn" class="secondary" disabled><span class="btn-icon">🧪</span>Test 0..1000</button>
+              <button id="clearStatsBtn" class="secondary"><span class="btn-icon">🗑️</span>Clear Stats</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- ================= LOG ================= -->
+      <details class="collapsible">
+        <summary><span class="icon">📜</span> Communication Log</summary>
+        <div class="card log-card" id="logCard">
+          <div class="card-header">
+            <div class="card-subtitle">TX = sent • RX = received</div>
+            <div class="log-controls">
+              <button id="clearLogBtn" class="secondary small"><span class="btn-icon">🧹</span>Clear</button>
+              <button id="copyLogBtn" class="secondary small"><span class="btn-icon">📋</span>Copy</button>
+              <button id="exportLogBtn" class="secondary small"><span class="btn-icon">⬇️</span>Export</button>
+            </div>
+          </div>
+          <div class="log" id="logContainer" aria-live="polite"></div>
+          <div class="log-footer">
+            <span>micro:bit Logger</span>
+            <span id="transportBadge" class="badge">N/A</span>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // Show/hide BLE hint based on transport selection
+    const transportSelect = document.getElementById('transportSelect');
+    const bleHint = document.getElementById('bleHint');
+    if (transportSelect && bleHint) {
+      transportSelect.addEventListener('change', function() {
+        bleHint.style.display = this.value === 'ble' ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

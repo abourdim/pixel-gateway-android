@@ -1,0 +1,779 @@
+:root {
+    --bg-color: #020617;
+    --panel-bg: #020617;
+    --accent: #22c55e;
+    --accent-soft: rgba(34, 197, 94, 0.15);
+    --accent-strong: rgba(34, 197, 94, 0.7);
+    --danger: #f97373;
+    --muted: #9ca3af;
+    --border: #1f2937;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.18), transparent 50%),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.2), transparent 55%),
+        #020617;
+    background-attachment: fixed;
+    color: #f9fafb;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 16px;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    /* --- FIX: Reduced max-width to fit elements tightly (300+16+440 + padding) --- */
+    max-width: 820px; 
+    width: 100%;
+    background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.18), transparent 60%),
+        var(--panel-bg);
+    border-radius: 16px;
+    box-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.85),
+        0 0 0 1px rgba(148, 163, 184, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.app::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(130deg, rgba(34,197,94,0.08), transparent 60%),
+        radial-gradient(circle at 20% 10%, rgba(56,189,248,0.2), transparent 50%);
+    opacity: 0.5;
+    mix-blend-mode: soft-light;
+}
+
+.rows-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Header */
+
+.header {
+    position: relative;
+    padding: 12px 18px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    gap: 8px;
+}
+
+.title-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.title-block h1 {
+    font-size: 1.2rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #10b981, #3b82f6, #a855f7, #ec4899, #10b981);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+    animation: gradientShift 6s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.title-block .subtitle {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    letter-spacing: 0.08em;
+}
+
+/* Status chip */
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(34,197,94,0.6);
+    padding: 4px 10px;
+    background:
+        radial-gradient(circle at top left, rgba(34,197,94,0.25), transparent 60%),
+        rgba(15,23,42,0.9);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #bbf7d0;
+    box-shadow:
+        0 0 0 1px rgba(30,64,175,0.3),
+        0 0 16px rgba(34,197,94,0.6);
+}
+
+.chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #22c55e;
+    box-shadow:
+        0 0 0 3px rgba(34,197,94,0.5),
+        0 0 14px rgba(22,163,74,0.9);
+}
+
+/* Layout */
+
+.row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.row:last-child {
+    margin-bottom: 0;
+}
+
+/* Generic card */
+
+.card {
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: radial-gradient(circle at top left, rgba(15,23,42,0.96), var(--panel-bg));
+    padding: 10px 12px 11px 12px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgba(15,23,42,0.7), transparent 60%);
+    mix-blend-mode: soft-light;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 6px;
+}
+
+.card-title {
+    font-size: 0.86rem;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-title .icon {
+    font-size: 1.05rem;
+}
+
+.card-subtitle {
+    font-size: 0.76rem;
+    color: #9ca3af;
+    margin-top: 3px;
+}
+
+/* Status & badges */
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    color: #f9fafb;
+    background: rgba(15, 23, 42, 0.9);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #f97373;
+    box-shadow:
+        0 0 0 2px rgba(248, 113, 113, 0.5),
+        0 0 10px rgba(248, 113, 113, 0.7);
+}
+
+.status-pill.connected {
+    border-color: rgba(34,197,94,0.9);
+    background:
+        radial-gradient(circle at top left, rgba(34,197,94,0.3), rgba(15,23,42,0.9));
+}
+
+.status-pill.connected .status-dot {
+    background: #22c55e;
+    box-shadow:
+        0 0 0 2px rgba(34,197,94,0.55),
+        0 0 10px rgba(22,163,74,0.9);
+}
+
+/* Generic badge */
+
+.badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,0.7);
+    color: #9ca3af;
+}
+
+.badge strong {
+    color: #e5e7eb;
+}
+
+.button-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+
+/* Buttons */
+
+button {
+    border: none;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.9);
+    color: #e5e7eb;
+    border: 1px solid rgba(148,163,184,0.5);
+    transition: all 0.15s ease;
+}
+
+button.primary {
+    background: linear-gradient(135deg, #22c55e, #4ade80);
+    color: #052e16;
+    border-color: rgba(34,197,94,0.9);
+    box-shadow:
+        0 12px 30px rgba(22,163,74,0.5),
+        0 0 0 1px rgba(15,23,42,0.95);
+}
+
+button.secondary {
+    background: rgba(15,23,42,0.9);
+    border-color: rgba(148,163,184,0.6);
+}
+
+button.small {
+    padding: 5px 9px;
+    font-size: 0.72rem;
+}
+
+button .btn-icon {
+    font-size: 1rem;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+        0 12px 28px rgba(15,23,42,0.95),
+        0 0 0 1px rgba(59,130,246,0.5);
+}
+
+/* Fun color button styles */
+.color-btn:hover {
+    transform: scale(1.15) rotate(5deg) !important;
+    box-shadow: 0 0 20px currentColor !important;
+}
+
+.color-btn:active {
+    transform: scale(0.95) !important;
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: default;
+    box-shadow: none;
+}
+
+/* Hint text */
+
+.hint {
+    font-size: 0.74rem;
+    color: #9ca3af;
+    margin-top: 3px;
+}
+.hint-title {
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+.hint ol {
+    margin: 0;
+    padding-left: 16px;
+}
+.hint li {
+    margin-bottom: 2px;
+}
+
+/* Message log */
+
+.log-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.log-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.log {
+    flex: 1 1 auto;
+    padding: 8px 10px;
+    overflow-y: auto;
+    min-height: 0;
+    max-height: 260px; 
+    font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    border-radius: 10px;
+    border: 1px solid rgba(31,41,55,0.95);
+    background: rgba(15,23,42,0.98);
+}
+.log-line {
+    margin-bottom: 2px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.log-line.info    { color: #9ca3af; }
+.log-line.success { color: #bbf7d0; }
+.log-line.error   { color: #f97373; }
+.log-line.tx      { color: #a5b4fc; }
+.log-line.rx      { color: #7dd3fc; }
+
+.log-footer {
+    padding-top: 5px;
+    font-size: 0.7rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ==========================================================================
+   EMOJI PICKER + MATRIX LAYOUT
+   ========================================================================== */
+
+/* The main grid container for the top section */
+.emoji-reorganized {
+  display: grid;
+  /* Left column fixed width, Right column flexible */
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.emoji-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.emoji-right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* Ensure the container doesn't overflow */
+  overflow: visible; 
+}
+
+/* Emoji selection buttons */
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.emoji-btn {
+  height: 40px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148,163,184,0.35);
+  background: rgba(15,23,42,0.75);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.emoji-btn:hover { 
+  transform: translateY(-1px) scale(1.03); 
+}
+
+.emoji-btn.active {
+  border-color: rgba(34,197,94,0.9);
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.7), 0 0 16px rgba(34,197,94,0.35);
+}
+
+.emoji-btn::after {
+  content: attr(data-description);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: rgba(15, 23, 42, 0.98);
+  color: #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  border: 1px solid rgba(148,163,184,0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+.emoji-btn:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* Emoji Categories */
+.emoji-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.emoji-category {
+  border: 1px solid rgba(148,163,184,0.25);
+  border-radius: 8px;
+  background: rgba(15,23,42,0.4);
+  overflow: hidden;
+}
+
+.emoji-category-title {
+  cursor: pointer;
+  list-style: none;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #e5e7eb;
+  background: rgba(15,23,42,0.6);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease;
+}
+
+.emoji-category-title:hover {
+  background: rgba(15,23,42,0.8);
+}
+
+.emoji-category-title::before {
+  content: "▸";
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.emoji-category[open] > .emoji-category-title::before {
+  transform: rotate(90deg);
+}
+
+.emoji-category .emoji-grid {
+  padding: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15,23,42,0.5);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148,163,184,0.5);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148,163,184,0.7);
+}
+
+/* THE PREVIEW MATRIX WRAPPER 
+   This is what was causing the stretching.
+*/
+.emoji-matrix-wrap {
+  border-radius: 12px;
+  border: 1px solid rgba(31,41,55,0.85);
+  background: rgba(15,23,42,0.65);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* 🌈 FUN RAINBOW GLOW BORDER */
+.emoji-matrix-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  padding: 2px;
+  background: linear-gradient(45deg, #ff0000, #ff7700, #ffff00, #00ff00, #0099ff, #6633ff, #ff00ff);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.emoji-matrix-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+
+/* THE MATRIX GRID ITSELF */
+.pixel-matrix {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 1px;
+  width: 100%;
+  
+  /* CRITICAL FIX: Limit the size of the preview */
+  max-width: 400px;
+  
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+/* --- FIX: Limit Send Button Width to match Matrix --- */
+#sendEmojiBtn {
+  max-width: 400px;
+  width: 100%;
+}
+
+.pixel-cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  background: radial-gradient(circle at 30% 30%, #0f172a, #020617);
+  box-sizing: border-box;
+  transition: transform 0.1s ease;
+}
+
+/* Simple mode - flat colors */
+.pixel-matrix.simple-mode .pixel-cell {
+  background: #0f172a;
+  border-color: rgba(55, 65, 81, 0.3);
+}
+
+.pixel-matrix.simple-mode .pixel-cell.on {
+  box-shadow: none;
+}
+
+.pixel-matrix.editable .pixel-cell:hover {
+  transform: scale(1.2);
+  border-color: rgba(255,255,255,0.3);
+  cursor: pointer;
+}
+
+.pixel-cell.on {
+  /* Default color if inline style missing */
+  background: #facc15; 
+  box-shadow: 0 0 10px rgba(250,204,21,0.55);
+}
+
+/* Animation for painting */
+@keyframes pop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.pixel-cell.just-painted {
+  animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Control sections */
+.control-section {
+    border-radius: 10px;
+    border: 1px solid rgba(31,41,55,0.9);
+    padding: 12px;
+    background: rgba(15,23,42,0.95);
+}
+
+.section-header { margin-bottom: 8px; }
+.section-title {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.section-subtitle {
+    font-size: 0.74rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+.form-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+input[type="text"] {
+    border-radius: 999px;
+    border: 1px solid rgba(31,41,55,0.9);
+    background: rgba(15,23,42,0.95);
+    color: #e5e7eb;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    flex: 1;
+}
+
+/* Collapsible sections */
+details.collapsible {
+  margin-bottom: 12px;
+}
+
+details.collapsible > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15,23,42,0.85);
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 12px;
+}
+
+details.collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.collapsible > summary::before {
+  content: "▸";
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+details.collapsible[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.collapsible > .card {
+  margin-top: 8px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .emoji-reorganized {
+    grid-template-columns: 1fr;
+  }
+  
+  .emoji-left,
+  .emoji-right {
+    max-width: 100%;
+  }
+  
+  .emoji-matrix-wrap {
+    padding: 10px;
+  }
+  
+  .connection-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Logo */
+.site-logo {
+    width: 72px;
+    height: 72px;
+}
+
+/* Mini Mission Control branding */
+.bismillah {
+    position: absolute;
+    top: 6px;
+    inset-inline: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Amiri", serif;
+    font-size: 12px;
+    opacity: 0.3;
+    color: rgba(200, 230, 255, 0.9);
+    pointer-events: none;
+}
+
+/* Subtle rainbow animation */
+@keyframes rainbow {
+  0% { color: #10b981; }
+  25% { color: #3b82f6; }
+  50% { color: #a855f7; }
+  75% { color: #ec4899; }
+  100% { color: #10b981; }
+}
